@@ -11,85 +11,94 @@ from sklearn.model_selection import train_test_split
 # PAGE CONFIG
 # --------------------------------------------------
 st.set_page_config(
-    page_title="Tourism Intelligence AI",
+    page_title="Tourism Intelligence",
     page_icon="🌍",
     layout="wide"
 )
 
 # --------------------------------------------------
-# PREMIUM STARTUP CSS
+# PREMIUM STARTUP UI (REFINED SPACING)
 # --------------------------------------------------
 st.markdown("""
 <style>
 
+/* Background */
 .main {
     background: radial-gradient(circle at top left, #1e1b4b, #020617);
 }
 
+/* Remove extra Streamlit padding */
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 1rem;
+}
+
+/* HERO SECTION */
 .hero {
     text-align: center;
-    padding-top: 160px;
-    padding-bottom: 140px;
+    padding-top: 80px;
+    padding-bottom: 60px;
 }
 
 .hero-title {
-    font-size: 70px;
+    font-size: 60px;
     font-weight: 800;
     color: white;
     letter-spacing: -1px;
 }
 
 .hero-subtitle {
-    font-size: 22px;
+    font-size: 20px;
     color: #94a3b8;
-    margin-top: 25px;
-    line-height: 1.6;
+    margin-top: 18px;
+    line-height: 1.5;
 }
 
+/* BUTTON */
 .stButton>button {
     background: linear-gradient(90deg, #6366f1, #8b5cf6);
     color: white;
-    padding: 16px 45px;
-    font-size: 18px;
-    border-radius: 14px;
+    padding: 14px 40px;
+    font-size: 16px;
+    border-radius: 12px;
     border: none;
-    margin-top: 50px;
+    margin-top: 30px;
     transition: 0.3s ease;
 }
 
 .stButton>button:hover {
     transform: scale(1.05);
-    background: linear-gradient(90deg, #4f46e5, #7c3aed);
 }
 
 /* GLASS PANEL */
 .glass {
     background: rgba(255,255,255,0.05);
     backdrop-filter: blur(18px);
-    padding: 35px;
-    border-radius: 20px;
+    padding: 25px;
+    border-radius: 18px;
     border: 1px solid rgba(255,255,255,0.08);
-    margin-bottom: 30px;
+    margin-bottom: 20px;
 }
 
 /* AI SCORE CARD */
 .score-card {
     text-align: center;
-    padding: 40px;
-    border-radius: 20px;
+    padding: 30px;
+    border-radius: 18px;
     background: linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.15));
     border: 1px solid rgba(255,255,255,0.1);
 }
 
 .score-value {
-    font-size: 60px;
+    font-size: 48px;
     font-weight: 800;
     color: white;
 }
 
 .score-label {
     color: #cbd5e1;
-    margin-top: 10px;
+    margin-top: 6px;
+    font-size: 14px;
 }
 
 </style>
@@ -158,7 +167,7 @@ else:
 
     st.markdown("## 🤖 AI Experience Engine")
 
-    col1, col2 = st.columns([1,1])
+    col1, col2 = st.columns([1, 1])
 
     # ---------------- Prediction Panel ----------------
     with col1:
@@ -210,16 +219,17 @@ else:
                 x="Rating",
                 y="AttractionId",
                 orientation="h",
-                title="Top Attractions by Average Rating",
                 color="Rating",
                 color_continuous_scale="Purples"
             )
             fig.update_layout(
                 template="plotly_dark",
                 plot_bgcolor="rgba(0,0,0,0)",
-                paper_bgcolor="rgba(0,0,0,0)"
+                paper_bgcolor="rgba(0,0,0,0)",
+                margin=dict(l=0, r=0, t=30, b=0)
             )
             st.plotly_chart(fig, use_container_width=True)
 
         st.markdown('</div>', unsafe_allow_html=True)
+
 
