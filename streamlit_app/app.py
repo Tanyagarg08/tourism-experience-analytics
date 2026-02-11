@@ -1,251 +1,167 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-import os
 import plotly.express as px
-from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
 
-# -------------------------------------------------
-# PAGE CONFIG
-# -------------------------------------------------
-st.set_page_config(
-    page_title="AI Tourism Engine",
-    page_icon="🌍",
-    layout="wide"
-)
+# -----------------------------
+# Page Config
+# -----------------------------
+st.set_page_config(page_title="Tourism AI Engine", layout="wide")
 
-# -------------------------------------------------
-# CLEAN PREMIUM CSS
-# -------------------------------------------------
+# -----------------------------
+# Custom Premium CSS
+# -----------------------------
 st.markdown("""
 <style>
 
-.main {
+body {
     background: linear-gradient(135deg, #0f172a, #020617);
 }
 
-.block-container {
-    padding-top: 2rem;
-}
-
-/* Hero Section */
-.hero-title {
+.big-title {
+    font-size: 48px;
+    font-weight: 700;
     text-align: center;
-    font-size: 60px;
-    font-weight: 900;
-    background: linear-gradient(90deg, #6366f1, #8b5cf6, #ec4899);
+    background: linear-gradient(90deg, #38bdf8, #a78bfa);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    margin-top: 120px;
 }
 
-.hero-subtitle {
+.subtitle {
     text-align: center;
-    font-size: 20px;
     color: #94a3b8;
-    margin-bottom: 40px;
+    font-size: 18px;
+    margin-bottom: 30px;
 }
 
-.center-btn {
-    display: flex;
-    justify-content: center;
-}
-
-/* KPI Cards */
-.kpi {
-    background: #111827;
-    padding: 25px;
-    border-radius: 18px;
+.kpi-card {
+    background: rgba(255,255,255,0.05);
+    padding: 30px;
+    border-radius: 20px;
     text-align: center;
-    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(10px);
 }
 
-.kpi-value {
-    font-size: 34px;
-    font-weight: 700;
-    color: white;
+.ai-card {
+    background: rgba(255,255,255,0.05);
+    padding: 40px;
+    border-radius: 25px;
+    backdrop-filter: blur(12px);
 }
 
-.kpi-label {
-    font-size: 14px;
-    color: #94a3b8;
-}
-
-/* Sections */
-.section {
-    background: #111827;
-    padding: 25px;
-    border-radius: 18px;
-    border: 1px solid rgba(255,255,255,0.06);
-    margin-bottom: 20px;
-}
-
-.stButton>button {
+.glow-button button {
     background: linear-gradient(90deg, #6366f1, #8b5cf6);
     color: white;
-    border-radius: 12px;
-    padding: 12px 40px;
-    border: none;
-    font-size: 16px;
+    font-weight: 600;
+    border-radius: 30px;
+    height: 50px;
+    font-size: 18px;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# -------------------------------------------------
-# SESSION STATE (LAUNCH SCREEN LOGIC)
-# -------------------------------------------------
+# -----------------------------
+# Load Data
+# -----------------------------
+@st.cache_data
+def load_data():
+    return pd.read_excel("data/Transaction.xlsx")
+
+df = load_data()
+
+# -----------------------------
+# Landing Screen
+# -----------------------------
 if "launched" not in st.session_state:
     st.session_state.launched = False
 
-# -------------------------------------------------
-# HERO LAUNCH SCREEN
-# -------------------------------------------------
 if not st.session_state.launched:
 
-    st.markdown('<div class="hero-title">AI Tourism Experience Engine</div>', unsafe_allow_html=True)
-    st.markdown('<div class="hero-subtitle">Predict satisfaction. Discover top attractions. Powered by Machine Learning.</div>', unsafe_allow_html=True)
+    st.markdown('<div class="big-title">🌍 Tourism AI Engine</div>', unsafe_allow_html=True)
+    st.markdown('<div class="subtitle">Predict • Analyze • Recommend</div>', unsafe_allow_html=True)
 
-    st.markdown('<div class="center-btn">', unsafe_allow_html=True)
-    if st.button("🚀 Launch AI Engine"):
-        st.session_state.launched = True
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("<br><br>", unsafe_allow_html=True)
 
-    st.stop()
+    col1, col2, col3 = st.columns([1,2,1])
+    with col2:
+        if st.button("🚀 Launch Intelligence Engine"):
+            st.session_state.launched = True
+            st.rerun()
 
-# -------------------------------------------------
-# LOAD DATA
-# -------------------------------------------------
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_PATH = os.path.join(BASE_DIR, "..", "data", "Transaction.xlsx")
+# -----------------------------
+# Dashboard
+# -----------------------------
+else:
 
-@st.cache_data
-def load_data(path):
-    return pd.read_excel(path)
+    st.markdown('<div class="big-title">Tourism Intelligence Dashboard</div>', unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
 
-transaction = load_data(DATA_PATH)
+    # KPI Metrics
+    col1, col2, col3 = st.columns(3)
 
-visit_mode_map = {
-    1: "Family",
-    2: "Friends",
-    3: "Couple",
-    4: "Business"
-}
+    with col1:
+        st.markdown(f'<div class="kpi-card"><h1>{round(df["Rating"].mean(),2)}</h1><p>Average Rating</p></div>', unsafe_allow_html=True)
 
-transaction["VisitModeLabel"] = transaction["VisitMode"].map(visit_mode_map)
-transaction.dropna(subset=["VisitModeLabel"], inplace=True)
+    with col2:
+        st.markdown(f'<div class="kpi-card"><h1>{len(df)}</h1><p>Total Visits</p></div>', unsafe_allow_html=True)
 
-# -------------------------------------------------
-# HEADER AFTER LAUNCH
-# -------------------------------------------------
-st.markdown("## 🌍 Tourism Intelligence Dashboard")
+    with col3:
+        st.markdown(f'<div class="kpi-card"><h1>{df["AttractionId"].nunique()}</h1><p>Unique Attractions</p></div>', unsafe_allow_html=True)
 
-# -------------------------------------------------
-# KPI SECTION
-# -------------------------------------------------
-col1, col2, col3 = st.columns(3)
+    st.markdown("<br><br>", unsafe_allow_html=True)
 
-with col1:
-    st.markdown(f"""
-    <div class="kpi">
-        <div class="kpi-value">{transaction['Rating'].mean():.2f}</div>
-        <div class="kpi-label">Average Rating</div>
-    </div>
-    """, unsafe_allow_html=True)
+    left, right = st.columns([1,1])
 
-with col2:
-    st.markdown(f"""
-    <div class="kpi">
-        <div class="kpi-value">{len(transaction)}</div>
-        <div class="kpi-label">Total Visits</div>
-    </div>
-    """, unsafe_allow_html=True)
+    # ---------------- Prediction Panel ----------------
+    with left:
+        st.markdown("## 🎯 Experience Prediction")
 
-with col3:
-    st.markdown(f"""
-    <div class="kpi">
-        <div class="kpi-value">{transaction['AttractionId'].nunique()}</div>
-        <div class="kpi-label">Unique Attractions</div>
-    </div>
-    """, unsafe_allow_html=True)
+        visit_year = st.number_input("Visit Year", min_value=2018, max_value=2025, value=2022)
+        visit_month = st.slider("Visit Month", 1, 12, 6)
+        visit_mode = st.selectbox("Visit Mode", sorted(df["VisitMode"].astype(str).unique()))
 
-st.markdown("")
+        le = LabelEncoder()
+        df["VisitMode_encoded"] = le.fit_transform(df["VisitMode"].astype(str))
 
-# -------------------------------------------------
-# MODEL
-# -------------------------------------------------
-le = LabelEncoder()
-transaction["VisitMode_encoded"] = le.fit_transform(transaction["VisitModeLabel"])
+        X = df[["VisitYear", "VisitMonth", "VisitMode_encoded"]]
+        y = df["Rating"]
 
-X = transaction[["VisitYear", "VisitMonth", "VisitMode_encoded"]]
-y = transaction["Rating"]
+        model = LinearRegression()
+        model.fit(X, y)
 
-X_train, _, y_train, _ = train_test_split(X, y, test_size=0.2, random_state=42)
+        mode_encoded = le.transform([visit_mode])[0]
+        prediction = model.predict([[visit_year, visit_month, mode_encoded]])[0]
 
-scaler = StandardScaler()
-X_train_scaled = scaler.fit_transform(X_train)
+        if st.button("Generate AI Prediction"):
+            st.markdown(f"""
+            <div class="ai-card">
+                <h1>⭐ {round(prediction,2)} / 5</h1>
+                <p>Predicted user satisfaction score</p>
+            </div>
+            """, unsafe_allow_html=True)
 
-model = LinearRegression()
-model.fit(X_train_scaled, y_train)
+    # ---------------- Smart Analytics ----------------
+    with right:
+        st.markdown("## 🔥 Top Attractions")
 
-# -------------------------------------------------
-# MAIN PANELS
-# -------------------------------------------------
-left, right = st.columns([1, 1])
+        top = df.groupby("AttractionId")["Rating"].mean().sort_values(ascending=False).head(10).reset_index()
 
-with left:
-    st.markdown('<div class="section">', unsafe_allow_html=True)
-    st.subheader("🎯 Experience Prediction")
+        fig = px.bar(
+            top,
+            x="Rating",
+            y="AttractionId",
+            orientation="h",
+            color="Rating",
+            color_continuous_scale="purples",
+        )
 
-    visit_year = st.number_input("Visit Year", 2000, 2030, 2022)
-    visit_month = st.slider("Visit Month", 1, 12, 6)
-    visit_mode_label = st.selectbox(
-        "Visit Mode",
-        sorted(transaction["VisitModeLabel"].unique())
-    )
+        fig.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)",
+            paper_bgcolor="rgba(0,0,0,0)",
+            font_color="white"
+        )
 
-    visit_mode_encoded = le.transform([visit_mode_label])[0]
-
-    if st.button("Generate Prediction"):
-        user_input = np.array([[visit_year, visit_month, visit_mode_encoded]])
-        user_input_scaled = scaler.transform(user_input)
-        prediction = model.predict(user_input_scaled)[0]
-        st.metric("Predicted Satisfaction", f"{prediction:.2f} / 5")
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with right:
-    st.markdown('<div class="section">', unsafe_allow_html=True)
-    st.subheader("🔥 Top Attractions")
-
-    rec = (
-        transaction[transaction["VisitModeLabel"] == visit_mode_label]
-        .groupby("AttractionId")["Rating"]
-        .mean()
-        .sort_values(ascending=False)
-        .head(7)
-        .reset_index()
-    )
-
-    fig = px.bar(
-        rec,
-        x="Rating",
-        y="AttractionId",
-        orientation="h",
-        color="Rating",
-        color_continuous_scale="Purples"
-    )
-
-    fig.update_layout(
-        template="plotly_dark",
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
-        margin=dict(l=0, r=0, t=30, b=0)
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
+        st.plotly_chart(fig, use_container_width=True)
