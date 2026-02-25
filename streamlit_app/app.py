@@ -1,167 +1,209 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
+import os
 import plotly.express as px
-from sklearn.linear_model import LinearRegression
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
+from sklearn.linear_model import LinearRegression
 
-# -----------------------------
-# Page Config
-# -----------------------------
-st.set_page_config(page_title="Tourism AI Engine", layout="wide")
+# --------------------------------------------------
+# PAGE CONFIG
+# --------------------------------------------------
+st.set_page_config(
+    page_title="Tourism Intelligence",
+    page_icon="🌍",
+    layout="wide"
+)
 
-# -----------------------------
-# Custom Premium CSS
-# -----------------------------
+# --------------------------------------------------
+# CLASSY LIGHT AI DASHBOARD THEME
+# --------------------------------------------------
 st.markdown("""
 <style>
 
-body {
-    background: linear-gradient(135deg, #0f172a, #020617);
+.main {
+    background: linear-gradient(135deg, #f6f9fc, #eef2f7);
 }
 
-.big-title {
-    font-size: 48px;
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+.title {
+    font-size: 40px;
     font-weight: 700;
-    text-align: center;
-    background: linear-gradient(90deg, #38bdf8, #a78bfa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: #1f2937;
 }
 
 .subtitle {
-    text-align: center;
-    color: #94a3b8;
-    font-size: 18px;
-    margin-bottom: 30px;
+    font-size: 16px;
+    color: #6b7280;
+    margin-bottom: 25px;
 }
 
-.kpi-card {
-    background: rgba(255,255,255,0.05);
-    padding: 30px;
-    border-radius: 20px;
-    text-align: center;
-    backdrop-filter: blur(10px);
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 6px 25px rgba(0,0,0,0.05);
 }
 
-.ai-card {
-    background: rgba(255,255,255,0.05);
-    padding: 40px;
-    border-radius: 25px;
-    backdrop-filter: blur(12px);
+.metric-title {
+    font-size: 14px;
+    color: #6b7280;
 }
 
-.glow-button button {
-    background: linear-gradient(90deg, #6366f1, #8b5cf6);
-    color: white;
+.metric-value {
+    font-size: 28px;
     font-weight: 600;
-    border-radius: 30px;
-    height: 50px;
-    font-size: 18px;
+    color: #111827;
+}
+
+.stButton>button {
+    background: #2563eb;
+    color: white;
+    border-radius: 8px;
+    padding: 10px 30px;
+    border: none;
+}
+
+.stButton>button:hover {
+    background: #1d4ed8;
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-# -----------------------------
-# Load Data
-# -----------------------------
+# --------------------------------------------------
+# LOAD DATA
+# --------------------------------------------------
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_PATH = os.path.join(BASE_DIR, "..", "data", "Transaction.xlsx")
+
 @st.cache_data
-def load_data():
-    return pd.read_excel("data/Transaction.xlsx")
+def load_data(path):
+    return pd.read_excel(path)
 
-df = load_data()
+df = load_data(DATA_PATH)
 
-# -----------------------------
-# Landing Screen
-# -----------------------------
-if "launched" not in st.session_state:
-    st.session_state.launched = False
+# --------------------------------------------------
+# CREATE VISIT MODE LABELS
+# --------------------------------------------------
+visit_mode_map = {
+    1: "Family",
+    2: "Friends",
+    3: "Couple",
+    4: "Business"
+}
 
-if not st.session_state.launched:
+df["VisitModeLabel"] = df["VisitMode"].map(visit_mode_map)
+df.dropna(subset=["VisitModeLabel"], inplace=True)
 
-    st.markdown('<div class="big-title">🌍 Tourism AI Engine</div>', unsafe_allow_html=True)
-    st.markdown('<div class="subtitle">Predict • Analyze • Recommend</div>', unsafe_allow_html=True)
+# --------------------------------------------------
+# HEADER
+# --------------------------------------------------
+st.markdown('<div class="title">🌍 Tourism Intelligence Dashboard</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">AI-powered visitor experience prediction and attraction analytics</div>', unsafe_allow_html=True)
 
-    st.markdown("<br><br>", unsafe_allow_html=True)
+# --------------------------------------------------
+# KPI SECTION
+# --------------------------------------------------
+col1, col2, col3 = st.columns(3)
 
-    col1, col2, col3 = st.columns([1,2,1])
-    with col2:
-        if st.button("🚀 Launch Intelligence Engine"):
-            st.session_state.launched = True
-            st.rerun()
+with col1:
+    st.markdown(f"""
+    <div class="card">
+        <div class="metric-title">Average Rating</div>
+        <div class="metric-value">{df['Rating'].mean():.2f}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-# -----------------------------
-# Dashboard
-# -----------------------------
-else:
+with col2:
+    st.markdown(f"""
+    <div class="card">
+        <div class="metric-title">Total Visits</div>
+        <div class="metric-value">{len(df)}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.markdown('<div class="big-title">Tourism Intelligence Dashboard</div>', unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
+with col3:
+    st.markdown(f"""
+    <div class="card">
+        <div class="metric-title">Unique Attractions</div>
+        <div class="metric-value">{df['AttractionId'].nunique()}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    # KPI Metrics
-    col1, col2, col3 = st.columns(3)
+st.markdown("")
 
-    with col1:
-        st.markdown(f'<div class="kpi-card"><h1>{round(df["Rating"].mean(),2)}</h1><p>Average Rating</p></div>', unsafe_allow_html=True)
+# --------------------------------------------------
+# MODEL
+# --------------------------------------------------
+le = LabelEncoder()
+df["VisitMode_encoded"] = le.fit_transform(df["VisitModeLabel"])
 
-    with col2:
-        st.markdown(f'<div class="kpi-card"><h1>{len(df)}</h1><p>Total Visits</p></div>', unsafe_allow_html=True)
+X = df[["VisitYear", "VisitMonth", "VisitMode_encoded"]]
+y = df["Rating"]
 
-    with col3:
-        st.markdown(f'<div class="kpi-card"><h1>{df["AttractionId"].nunique()}</h1><p>Unique Attractions</p></div>', unsafe_allow_html=True)
+model = LinearRegression()
+model.fit(X, y)
 
-    st.markdown("<br><br>", unsafe_allow_html=True)
+# --------------------------------------------------
+# MAIN PANELS
+# --------------------------------------------------
+left, right = st.columns([1,1])
 
-    left, right = st.columns([1,1])
+# ---------------- Prediction Panel ----------------
+with left:
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("AI Experience Prediction")
 
-    # ---------------- Prediction Panel ----------------
-    with left:
-        st.markdown("## 🎯 Experience Prediction")
+    visit_year = st.number_input("Visit Year", 2000, 2030, 2022)
+    visit_month = st.slider("Visit Month", 1, 12, 6)
+    visit_mode_label = st.selectbox(
+        "Visit Mode",
+        sorted(df["VisitModeLabel"].unique())
+    )
 
-        visit_year = st.number_input("Visit Year", min_value=2018, max_value=2025, value=2022)
-        visit_month = st.slider("Visit Month", 1, 12, 6)
-        visit_mode = st.selectbox("Visit Mode", sorted(df["VisitMode"].astype(str).unique()))
+    visit_mode_encoded = le.transform([visit_mode_label])[0]
 
-        le = LabelEncoder()
-        df["VisitMode_encoded"] = le.fit_transform(df["VisitMode"].astype(str))
+    if st.button("Generate Prediction"):
+        prediction = model.predict([[visit_year, visit_month, visit_mode_encoded]])[0]
+        st.success(f"Predicted Satisfaction Score: ⭐ {prediction:.2f} / 5")
 
-        X = df[["VisitYear", "VisitMonth", "VisitMode_encoded"]]
-        y = df["Rating"]
+    st.markdown('</div>', unsafe_allow_html=True)
 
-        model = LinearRegression()
-        model.fit(X, y)
+# ---------------- Recommendation Panel ----------------
+with right:
+    st.markdown('<div class="card">', unsafe_allow_html=True)
+    st.subheader("Top Attractions by Visit Mode")
 
-        mode_encoded = le.transform([visit_mode])[0]
-        prediction = model.predict([[visit_year, visit_month, mode_encoded]])[0]
+    rec = (
+        df[df["VisitModeLabel"] == visit_mode_label]
+        .groupby("AttractionId")["Rating"]
+        .mean()
+        .sort_values(ascending=False)
+        .head(7)
+        .reset_index()
+    )
 
-        if st.button("Generate AI Prediction"):
-            st.markdown(f"""
-            <div class="ai-card">
-                <h1>⭐ {round(prediction,2)} / 5</h1>
-                <p>Predicted user satisfaction score</p>
-            </div>
-            """, unsafe_allow_html=True)
+    fig = px.bar(
+        rec,
+        x="Rating",
+        y="AttractionId",
+        orientation="h",
+        color="Rating",
+        color_continuous_scale="Blues"
+    )
 
-    # ---------------- Smart Analytics ----------------
-    with right:
-        st.markdown("## 🔥 Top Attractions")
+    fig.update_layout(
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        margin=dict(l=0, r=0, t=30, b=0)
+    )
 
-        top = df.groupby("AttractionId")["Rating"].mean().sort_values(ascending=False).head(10).reset_index()
+    st.plotly_chart(fig, use_container_width=True)
 
-        fig = px.bar(
-            top,
-            x="Rating",
-            y="AttractionId",
-            orientation="h",
-            color="Rating",
-            color_continuous_scale="purples",
-        )
-
-        fig.update_layout(
-            plot_bgcolor="rgba(0,0,0,0)",
-            paper_bgcolor="rgba(0,0,0,0)",
-            font_color="white"
-        )
-
-        st.plotly_chart(fig, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
